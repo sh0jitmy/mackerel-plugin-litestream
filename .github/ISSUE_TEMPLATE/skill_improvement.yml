@@ -1,0 +1,83 @@
+name: 💡 AI スキル改善提案 (Skill Improvement)
+description: AIエージェント用カスタムスキル (.claude/skills) の誤動作や改善提案を行います。
+title: "[SKILL]: スキル名 - 短い要約"
+labels: ["skill-improvement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        AI エージェント用カスタムスキルの改善やバグ修正について教えてください。
+
+  - type: dropdown
+    id: skill-name
+    attributes:
+      label: 🎯 対象のスキル名
+      description: 修正が必要なカスタムスキルを選択してください。
+      options:
+        - agent-skill-evaluator
+        - ai-skill-engineering
+        - database-design
+        - evidence-governance
+        - git-strategy
+        - github-copilot-review
+        - golang-design
+        - golang-e2e-testing
+        - golang-implementation
+        - golang-observability
+        - marketing-strategy
+        - network-design
+        - openapi-design
+        - openapi-design-review
+        - product-management
+        - quality-inspector
+        - sakuracloud-solution-architect
+        - sakuracloud-terraform
+        - software-architecture
+        - sre-deployment
+        - transaction-profiling-analyzer
+    validations:
+      required: true
+
+  - type: dropdown
+    id: issue-type
+    attributes:
+      label: 🚨 問題の種類
+      description: どのような不適合が発生しましたか？
+      options:
+        - "Under-triggering (必要な会話でスキルがロードされなかった)"
+        - "Over-triggering (無関係な会話でスキルが誤ってロードされた)"
+        - "Incorrect/Bad Advice (スキルが誤った設計・実装を提案した)"
+        - "Missing Rule (不足している重要なプラクティスがある)"
+        - "Outdated (スキルの内容が現在のコードベースと乖離している)"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 📝 問題の具体的な内容
+      description: どのような指示（プロンプト）の際に、どのような問題が発生したかを記述してください。
+      placeholder: |
+        指示プロンプト: 「〜の並行処理を書いて」
+        発生した挙動: エージェントがクローズ漏れのあるチャネルコードを提案した。
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: 💡 期待される挙動 / あるべき指針
+      description: 本来、スキルがどのようにエージェントを誘導すべきだったかを記述してください。
+      placeholder: |
+        期待される挙動: チャネルの所有者がクローズすることを明記し、goleak 等を用いたテスト作成を促すべき。
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-fix
+    attributes:
+      label: 🔧 修正案
+      description: スキルファイルへの具体的な追加・修正案があれば記載してください。
+      render: markdown
+    validations:
+      required: false

@@ -1,0 +1,94 @@
+name: 🐛 バグ報告 (Bug Report)
+description: アプリケーションの不具合やエラーを報告します。
+title: "[BUG]: 短い要約"
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        バグの報告ありがとうございます。再現に必要な情報をできるだけ詳しく記入してください。
+
+  - type: input
+    id: go-version
+    attributes:
+      label: 🔧 Go バージョン
+      description: "`go version` の出力を記入してください。"
+      placeholder: "go1.26.0 darwin/arm64"
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: 💻 OS / 環境
+      description: "OS の種類とバージョンを記入してください。"
+      placeholder: "macOS 15.5 / Ubuntu 24.04 / Windows 11"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: 📦 影響コンポーネント
+      description: バグが発生しているコンポーネントを選択してください。
+      options:
+        - "API / HTTP (internal/web)"
+        - "データベース (ent / internal/database)"
+        - "OpenAPI 生成コード (ogen)"
+        - "Terraform / IaC (terraform)"
+        - "CI / GitHub Actions"
+        - "ビルド / リリース (GoReleaser)"
+        - "ライセンスチェック (scripts)"
+        - "その他"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 📝 バグの概要
+      description: 何が起きたかを簡潔に説明してください。
+      placeholder: |
+        `make test` を実行すると、TestE2E_AppAPI がタイムアウトで失敗する。
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: 🔄 再現手順
+      description: バグを再現するための手順を記載してください。
+      placeholder: |
+        1. `git clone` してリポジトリをローカルに取得
+        2. `make generate` でコード生成
+        3. `make test` を実行
+        4. TestE2E_AppAPI が timeout エラーで失敗
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: ✅ 期待される挙動
+      description: 本来どのように動作すべきかを記述してください。
+      placeholder: |
+        `make test` が全テスト PASS で正常終了すること。
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 📋 ログ / エラーメッセージ
+      description: 関連するエラー出力やログを貼り付けてください。
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 📎 補足情報
+      description: スクリーンショット、設定ファイルの抜粋など、追加情報があれば記載してください。
+    validations:
+      required: false

@@ -1,0 +1,42 @@
+version: "2"
+
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+
+linters:
+  default: none
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - revive
+    - gosec
+    - testifylint
+    - paralleltest
+    - tparallel
+  settings:
+    govet:
+      enable-all: true
+      disable:
+        - fieldalignment
+    revive:
+      rules:
+        - name: exported
+          disabled: true
+        - name: package-comments
+          disabled: true
+    gosec:
+      excludes:
+        - G104
+    paralleltest:
+      # 複製先プロジェクトでの柔軟性のために、必要に応じて個別のテスト設定を行えますが、
+      # 基本的には t.Parallel() の使用を強制します。
+      ignore-missing: false
+
+formatters:
+  enable:
+    - gofmt
+    - goimports

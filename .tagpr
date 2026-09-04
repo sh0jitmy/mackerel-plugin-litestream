@@ -1,0 +1,9 @@
+# tagpr configuration file
+# For details, see: https://github.com/Songmu/tagpr
+
+[tagpr]
+	vPrefix = true
+	releaseBranch = main
+	versionFile = version.go
+	majorLabels = major
+	minorLabels = minor

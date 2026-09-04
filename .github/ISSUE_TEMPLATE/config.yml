@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 ドキュメント / ADR
+    url: https://github.com/sh0jitmy/go_template/tree/main/docs
+    about: アーキテクチャ設計記録（ADR）やリポジトリドキュメントを参照してください。

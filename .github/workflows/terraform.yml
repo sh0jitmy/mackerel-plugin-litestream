@@ -1,0 +1,102 @@
+name: Terraform CI/CD
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'terraform/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'terraform/**'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  validate-and-plan:
+    name: Terraform Validate and Plan
+    runs-on: ubuntu-latest
+    env:
+      SAKURA_ACCESS_TOKEN: ${{ secrets.SAKURA_ACCESS_TOKEN }}
+      SAKURA_ACCESS_TOKEN_SECRET: ${{ secrets.SAKURA_ACCESS_TOKEN_SECRET }}
+      # リモートバックエンド(S3互換オブジェクトストレージ等)利用時の認証用プレースホルダー
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@a967c87c27e347ef8a3b591b65e90538f5f61543 # v3.1.2
+        with:
+          terraform_version: "1.13.0"
+
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@8093c56d67b7dd08ec07e2c39e248b6132646d5f # v4.1.0
+        with:
+          tflint_version: "latest"
+
+      - name: Setup TFSec
+        uses: aquasecurity/tfsec-action@b46d7e8b603837877c449c2598ad53f3e1b7147b # v1.0.0
+        with:
+          soft_fail: false
+
+      - name: Check Format
+        run: terraform fmt -check -recursive
+        working-directory: ./terraform
+
+      - name: Initialize TFLint
+        run: tflint --init
+        working-directory: ./terraform
+        continue-on-error: true
+
+      - name: Run TFLint
+        run: tflint -f compact
+        working-directory: ./terraform
+
+      - name: Terraform Init (Validation)
+        run: terraform init -backend=false
+        working-directory: ./terraform
+
+      - name: Terraform Validate
+        run: terraform validate
+        working-directory: ./terraform
+
+      - name: Terraform Plan (Pull Request only)
+        if: github.event_name == 'pull_request'
+        run: |
+          # 実際のPlanではbackendの初期化が必要なため、Secrets定義がある前提でbackendを有効化してInitし直します
+          terraform init -reconfigure
+          terraform plan -no-color -input=false
+        working-directory: ./terraform
+
+  apply:
+    name: Terraform Apply
+    needs: validate-and-plan
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      SAKURA_ACCESS_TOKEN: ${{ secrets.SAKURA_ACCESS_TOKEN }}
+      SAKURA_ACCESS_TOKEN_SECRET: ${{ secrets.SAKURA_ACCESS_TOKEN_SECRET }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@a967c87c27e347ef8a3b591b65e90538f5f61543 # v3.1.2
+        with:
+          terraform_version: "1.13.0"
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: ./terraform
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve -input=false
+        working-directory: ./terraform
