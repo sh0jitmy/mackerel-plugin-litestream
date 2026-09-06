@@ -59,11 +59,19 @@ build:
 
 release-check:
 	@echo "==> Validating GoReleaser configuration..."
-	@goreleaser check
+	@if command -v goreleaser >/dev/null 2>&1; then \
+		goreleaser check; \
+	else \
+		go run github.com/goreleaser/goreleaser/v2@latest check; \
+	fi
 
 release-snapshot:
 	@echo "==> Building GoReleaser snapshot..."
-	@goreleaser release --snapshot --clean
+	@if command -v goreleaser >/dev/null 2>&1; then \
+		goreleaser release --snapshot --clean; \
+	else \
+		go run github.com/goreleaser/goreleaser/v2@latest release --snapshot --clean; \
+	fi
 
 license-check:
 	@echo "==> Checking Go source files license headers..."

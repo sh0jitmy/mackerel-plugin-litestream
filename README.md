@@ -29,17 +29,26 @@ Litestream は SQLite データベースのデータをクラウドストレー�
 
 ## 📦 インストール
 
-### 方法 1: GitHub Releases からバイナリをダウンロード (推奨)
-[Releases ページ](https://github.com/shjtmy/mackerel-plugin-litestream/releases) からお使いの OS・アーキテクチャに合ったバイナリをダウンロードし、`/usr/local/bin` 等の PATH の通ったディレクトリに配置します。
+### 方法 1: mkr コマンドでインストール (推奨)
+Mackerel 公式 CLI ツール `mkr` がインストールされている環境であれば、1 コマンドで最新バイナリを自動インストール可能です。
+
+```bash
+sudo mkr plugin install sh0jitmy/mackerel-plugin-litestream
+```
+※ `/opt/mackerel-agent/plugins/bin/mackerel-plugin-litestream` に自動配置されます。
+
+### 方法 2: GitHub Releases からバイナリをダウンロード
+[Releases ページ](https://github.com/shjtmy/mackerel-plugin-litestream/releases) からお使いの OS・アーキテクチャに合った zip アーカイブをダウンロード・解凍し、`/usr/local/bin` 等の PATH の通ったディレクトリに配置します。
 
 ```bash
 # 例: Linux amd64 の場合
-sudo curl -fsSL -o /usr/local/bin/mackerel-plugin-litestream \
-  https://github.com/shjtmy/mackerel-plugin-litestream/releases/latest/download/mackerel-plugin-litestream_Linux_x86_64
+curl -fsSL -O https://github.com/shjtmy/mackerel-plugin-litestream/releases/latest/download/mackerel-plugin-litestream_linux_amd64.zip
+unzip mackerel-plugin-litestream_linux_amd64.zip
+sudo mv mackerel-plugin-litestream /usr/local/bin/
 sudo chmod +x /usr/local/bin/mackerel-plugin-litestream
 ```
 
-### 方法 2: Go コマンドでインストール
+### 方法 3: Go コマンドでインストール
 ```bash
 go install github.com/shjtmy/mackerel-plugin-litestream@latest
 ```

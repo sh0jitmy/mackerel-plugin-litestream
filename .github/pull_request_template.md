@@ -7,32 +7,31 @@
 
 ## 📦 変更カテゴリ / Change Category
 <!-- 該当するカテゴリにチェックを入れてください。 -->
-- [ ] API / HTTP (internal/web)
-- [ ] データベース (ent スキーマ / Atlas マイグレーション)
-- [ ] CLI (urfave/cli)
-- [ ] セキュリティ (認証 / TLS / ACME)
-- [ ] オブザーバビリティ (slog / OTel / Prometheus)
-- [ ] Terraform / IaC (さくらのクラウド)
-- [ ] CI / CD (GitHub Actions / GoReleaser / tagpr)
-- [ ] AI スキル (.claude/skills)
-- [ ] ドキュメント / テンプレート
+- [ ] メトリクス / プラグイン機能 (`internal/litestream`)
+  - [ ] Prometheus メトリクス収集 (レプリケーション / WAL)
+  - [ ] スナップショット / ストレージ監視
+  - [ ] リストア整合性検証 (Restore Check)
+  - [ ] systemd サービス状態監視
+- [ ] CLI / 設定フラグ (`main.go`)
+- [ ] CI / CD / リリース (`GitHub Actions`, `GoReleaser`, `tagpr`)
+- [ ] テスト / 検証環境 (`docker-compose`, ユニットテスト, モック)
+- [ ] ドキュメント / 仕様書 (`README.md`, `docs/`)
+- [ ] 依存関係 / ツール設定 (`go.mod`, `Makefile` 等)
 - [ ] その他
 
 ## 🛠️ 変更内容 / Changes
 <!-- どのような変更を加えたかを箇条書きで記載してください。 -->
--
+- 
 
 ## 🧪 検証チェックリスト / Verification Checklist
 <!-- 実施した検証にチェックを入れてください。 -->
-- [ ] `make generate` を実行し、`git diff --exit-code` で生成コードに差分がないことを確認した
 - [ ] `make lint` が 0 issues で成功することを確認した
-- [ ] `make test` が全テスト PASS で成功することを確認した
-- [ ] `make build` が正常に完了することを確認した
-- [ ] `make license-check` でライセンスヘッダーが適切であることを確認した
-- [ ] OpenAPI 変更時: `make openapi-lint` が正常に通過することを確認した
-- [ ] Terraform 変更時: `terraform fmt -check`, `validate`, `tflint`, `tfsec` を確認した
-- [ ] AI スキル 変更時: `make check` で文法・フロントマターエラーがないことを確認した
+- [ ] `make test` で全テストが PASS し、カバレッジ基準（>= 95%）を満たすことを確認した
+- [ ] `make build` でバイナリ（`bin/mackerel-plugin-litestream`）が正常に生成されることを確認した
+- [ ] `make license-check` でソースコードのライセンスヘッダーが適切であることを確認した
+- [ ] GoReleaser 変更時: `goreleaser check` (または `go run github.com/goreleaser/goreleaser/v2@latest check`) が成功することを確認した
+- [ ] 動作確認: ローカルまたは Docker 検証環境でメトリクス出力 / プラグイン実行を確認した（該当する場合）
 
 ## 🚨 注意事項・懸念点 / Notes & Concerns
-<!-- 破壊的変更、互換性の懸念、パフォーマンスへの影響などがあれば記述してください。 -->
--
+<!-- メトリクスキーの変更、破壊的変更、Litestream CLI/S3 API 互換性、Mackerel メトリクス課金への影響などがあれば記述してください。 -->
+- 

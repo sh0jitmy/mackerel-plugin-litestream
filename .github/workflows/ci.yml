@@ -17,45 +17,9 @@ jobs:
       - name: Check license headers
         run: make license-check
 
-  openapi-lint:
-    name: OpenAPI Lint (Spectral)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Set up Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
-        with:
-          node-version: '20'
-
-      - name: Run Spectral lint
-        run: make openapi-lint
-
-  generate:
-    name: Generate Code Diff Check
-    runs-on: ubuntu-latest
-    needs: openapi-lint
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Set up Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          go-version: '1.26'
-          cache: true
-
-      - name: Generate code
-        run: make generate
-
-      - name: Verify no diff
-        run: git diff --exit-code
-
   lint:
     name: golangci-lint
     runs-on: ubuntu-latest
-    needs: generate
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -63,11 +27,8 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: '1.26'
+          go-version: '1.26.6'
           cache: true
-
-      - name: Generate code
-        run: make generate
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
@@ -77,7 +38,6 @@ jobs:
   vulncheck:
     name: govulncheck
     runs-on: ubuntu-latest
-    needs: generate
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -85,11 +45,8 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: '1.26'
+          go-version: '1.26.6'
           cache: true
-
-      - name: Generate code
-        run: make generate
 
       - name: Install govulncheck
         run: go install golang.org/x/vuln/cmd/govulncheck@latest
@@ -98,12 +55,8 @@ jobs:
         run: govulncheck ./...
 
   test:
-    name: Test
+    name: Test & Coverage (>=95%)
     runs-on: ubuntu-latest
-    needs: generate
-    strategy:
-      matrix:
-        go-version: ['1.26']
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -111,19 +64,15 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: ${{ matrix.go-version }}
+          go-version: '1.26.6'
           cache: true
 
-      - name: Run tests
+      - name: Run tests with coverage
         run: make test
 
   build:
-    name: Build
+    name: Build Binary
     runs-on: ubuntu-latest
-    needs: generate
-    strategy:
-      matrix:
-        go-version: ['1.26']
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -131,8 +80,28 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: ${{ matrix.go-version }}
+          go-version: '1.26.6'
           cache: true
 
-      - name: Build application
+      - name: Build plugin
         run: make build
+
+  goreleaser-check:
+    name: GoReleaser Config Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: '1.26.6'
+          cache: true
+
+      - name: Check GoReleaser config
+        uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94 # v7.2.3
+        with:
+          distribution: goreleaser
+          version: '~> v2'
+          args: check

@@ -24,15 +24,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Fetch tags
+      - name: Fetch tags and pull latest release commit
         if: ${{ steps.tagpr.outputs.tag != '' }}
-        run: git fetch --tags
+        run: |
+          git pull --rebase origin main
+          git fetch --tags --force
 
       - name: Set up Go
         if: ${{ steps.tagpr.outputs.tag != '' }}
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: '1.26.5'
+          go-version: '1.26.6'
           cache: true
 
       - name: Run GoReleaser

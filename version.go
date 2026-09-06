@@ -14,9 +14,10 @@
 //
 // Author: [YOUR_NAME]
 
-// Package main is the entry point of the Go template application.
+// Package main is the entry point of mackerel-plugin-litestream.
 package main
 
 // Version はアプリケーションのセマンティックバージョンです。
 // GitHub Actions の tagpr によって自動的にインクリメントされ、管理されます。
-const Version = "0.0.2"
+// GoReleaser によるビルド時に -ldflags "-X main.Version={{.Version}}" で上書きされます。
+var Version = "0.0.2"

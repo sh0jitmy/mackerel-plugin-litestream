@@ -6,9 +6,16 @@ before:
     - go mod tidy
 
 builds:
-  - env:
-      - CGO_ENABLED=0
+  - id: mackerel-plugin-litestream
+    binary: mackerel-plugin-litestream
     main: .
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X main.Version={{.Version}}
     goos:
       - linux
       - darwin
@@ -17,20 +24,15 @@ builds:
       - amd64
       - arm64
 
+# mkr plugin install は `<repo>_<GOOS>_<GOARCH>.zip` の形式を要求します。
 archives:
-  - format: tar.gz
-    # this name template makes the OS and Arch compatible with the format of Go binaries
-    name_template: >-
-      {{ .ProjectName }}_
-      {{- title .Os }}_
-      {{- if eq .Arch "amd64" }}x86_64
-      {{- else if eq .Arch "386" }}i386
-      {{- else }}{{ .Arch }}{{ end }}
-      {{- if .Arm }}v{{ .Arm }}{{ end }}
-    # use zip for windows archives
-    format_overrides:
-      - goos: windows
-        format: zip
+  - id: mackerel-plugin-litestream
+    formats:
+      - zip
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - README*
+      - LICENSE*
 
 checksum:
   name_template: 'checksums.txt'
@@ -44,3 +46,11 @@ changelog:
     exclude:
       - '^docs?:'
       - '^test:'
+
+release:
+  github:
+    owner: sh0jitmy
+    name: mackerel-plugin-litestream
+  draft: false
+  replace_existing_artifacts: true
+

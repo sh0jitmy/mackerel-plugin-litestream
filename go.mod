@@ -1,6 +1,6 @@
 module github.com/shjtmy/mackerel-plugin-litestream
 
-go 1.26.5
+go 1.26.6
 
 require (
 	github.com/mackerelio/go-mackerel-plugin v0.1.6
