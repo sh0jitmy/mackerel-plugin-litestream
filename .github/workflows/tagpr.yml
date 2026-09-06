@@ -24,9 +24,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Fetch tags
+      - name: Fetch tags and pull latest release commit
         if: ${{ steps.tagpr.outputs.tag != '' }}
-        run: git fetch --tags
+        run: |
+          git pull --rebase origin main
+          git fetch --tags --force
 
       - name: Set up Go
         if: ${{ steps.tagpr.outputs.tag != '' }}
