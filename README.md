@@ -1,6 +1,7 @@
 # mackerel-plugin-litestream
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/shjtmy/mackerel-plugin-litestream)](https://goreportcard.com/report/github.com/shjtmy/mackerel-plugin-litestream)
+[![CI](https://github.com/sh0jitmy/mackerel-plugin-litestream/actions/workflows/ci.yml/badge.svg)](https://github.com/sh0jitmy/mackerel-plugin-litestream/actions/workflows/ci.yml)
+[![GitHub release](https://img.shields.io/github/v/release/sh0jitmy/mackerel-plugin-litestream)](https://github.com/sh0jitmy/mackerel-plugin-litestream/releases)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 **mackerel-plugin-litestream** は、SQLite のリアルタイムレプリケーションツール [Litestream](https://litestream.io/) の健全性、レプリケーション状態、およびバックアップ信頼性を可視化・監視するための Mackerel メトリックプラグインです。
@@ -38,11 +39,11 @@ sudo mkr plugin install sh0jitmy/mackerel-plugin-litestream
 ※ `/opt/mackerel-agent/plugins/bin/mackerel-plugin-litestream` に自動配置されます。
 
 ### 方法 2: GitHub Releases からバイナリをダウンロード
-[Releases ページ](https://github.com/shjtmy/mackerel-plugin-litestream/releases) からお使いの OS・アーキテクチャに合った zip アーカイブをダウンロード・解凍し、`/usr/local/bin` 等の PATH の通ったディレクトリに配置します。
+[Releases ページ](https://github.com/sh0jitmy/mackerel-plugin-litestream/releases) からお使いの OS・アーキテクチャに合った zip アーカイブをダウンロード・解凍し、`/usr/local/bin` 等の PATH の通ったディレクトリに配置します。
 
 ```bash
 # 例: Linux amd64 の場合
-curl -fsSL -O https://github.com/shjtmy/mackerel-plugin-litestream/releases/latest/download/mackerel-plugin-litestream_linux_amd64.zip
+curl -fsSL -O https://github.com/sh0jitmy/mackerel-plugin-litestream/releases/latest/download/mackerel-plugin-litestream_linux_amd64.zip
 unzip mackerel-plugin-litestream_linux_amd64.zip
 sudo mv mackerel-plugin-litestream /usr/local/bin/
 sudo chmod +x /usr/local/bin/mackerel-plugin-litestream
