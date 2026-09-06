@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.0.3](https://github.com/sh0jitmy/mackerel-plugin-litestream/compare/v0.0.2...v0.0.3) - 2026-09-06
+
+- docs: update README instructions and configuration details  by @sh0jitmy in https://github.com/sh0jitmy/mackerel-plugin-litestream/pull/10
+
 ## [v0.0.2](https://github.com/sh0jitmy/mackerel-plugin-litestream/commits/v0.0.2) - 2026-09-06
 
 - Fix/tagpr go release by @sh0jitmy in https://github.com/sh0jitmy/mackerel-plugin-litestream/pull/8
