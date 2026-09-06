@@ -1,0 +1,68 @@
+services:
+  minio:
+    image: minio/minio:latest
+    container_name: litestream-test-minio
+    command: server /data --console-address ":9001"
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 2s
+      timeout: 2s
+      retries: 5
+
+  minio-init:
+    image: minio/mc:latest
+    container_name: litestream-test-minio-init
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      until /usr/bin/mc alias set myminio http://minio:9000 minioadmin minioadmin; do
+        echo 'waiting for minio...'
+        sleep 1
+      done;
+      /usr/bin/mc mb myminio/test-bucket --ignore-existing;
+      echo 'bucket test-bucket created successfully';
+      exit 0;
+      "
+
+  sqlite-writer:
+    image: alpine:latest
+    container_name: litestream-test-sqlite-writer
+    volumes:
+      - db-data:/data
+    command: >
+      /bin/sh -c "
+      umask 000;
+      apk add --no-cache sqlite;
+      chmod 777 /data;
+      sqlite3 /data/test.db 'PRAGMA journal_mode=WAL; CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT, created_at DATETIME);';
+      chmod 666 /data/test.db*;
+      echo 'SQLite DB initialized with WAL mode';
+      while true; do
+        sqlite3 /data/test.db \"INSERT INTO users (name, created_at) VALUES ('User ' || abs(random() % 10000), datetime('now'));\";
+        chmod 666 /data/test.db* 2>/dev/null || true;
+        sleep 1;
+      done;
+      "
+
+  litestream:
+    image: litestream/litestream:latest
+    container_name: litestream-test-daemon
+    depends_on:
+      minio-init:
+        condition: service_completed_successfully
+    volumes:
+      - ./litestream.yml:/etc/litestream.yml:ro
+      - db-data:/data
+    ports:
+      - "9090:9090"
+    command: replicate -config /etc/litestream.yml
+
+volumes:
+  db-data:

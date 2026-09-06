@@ -30,29 +30,14 @@ help:
 
 # --- Go Development ---
 
-openapi-lint:
-	@echo "==> Running Spectral lint on OpenAPI spec..."
-	@if command -v spectral >/dev/null 2>&1; then \
-		NODE_OPTIONS="--no-deprecation" spectral lint api/openapi.yaml; \
-	elif command -v npx >/dev/null 2>&1; then \
-		NODE_OPTIONS="--no-deprecation" npx -y @stoplight/spectral-cli lint api/openapi.yaml; \
-	else \
-		echo "Spectral CLI is not installed and npx is not available. Please install it."; \
-		exit 1; \
-	fi
-
-generate: openapi-lint
-	@echo "==> Generating code from schema..."
-	@go generate ./...
-
-fmt: generate
+fmt:
 	@echo "==> Formatting Go source files..."
 	@go fmt ./...
 	@if command -v golangci-lint >/dev/null 2>&1; then \
 		golangci-lint run --fix ./...; \
 	fi
 
-lint: generate
+lint:
 	@echo "==> Running golangci-lint..."
 	@golangci-lint run ./...
 
@@ -64,13 +49,13 @@ vulncheck:
 	@echo "==> Running govulncheck..."
 	@go run golang.org/x/vuln/cmd/govulncheck@latest ./...
 
-test: generate
+test:
 	@bash scripts/check_coverage.sh
 
-build: generate
+build:
 	@echo "==> Building binary..."
 	@mkdir -p bin
-	@go build -v -o bin/app ./cmd/app
+	@go build -v -o bin/mackerel-plugin-litestream .
 
 release-check:
 	@echo "==> Validating GoReleaser configuration..."

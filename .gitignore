@@ -19,6 +19,7 @@ dist/
 
 # Local build artifacts
 bin/
+mackerel-plugin-litestream
 
 # IDE/Editor config
 .idea/

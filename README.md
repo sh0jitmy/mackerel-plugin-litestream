@@ -1,133 +1,197 @@
-# Go & SRE/DB/Security 開発用 GitHub テンプレートリポジトリ
+# mackerel-plugin-litestream
 
-このリポジトリは、Go (Golang) によるセキュアで高信頼なWebアプリケーション開発を迅速に開始するための、GitHub テンプレートリポジトリです。
-CIでの静的解析、脆弱性診断、自動タグ付け (tagpr)、リリース管理 (GoReleaser) のパイプラインがあらかじめ統合されているほか、AIエージェントの回答品質を向上させるための日本語カスタムスキル（`.claude/skills`）を同梱しています。
+[![Go Report Card](https://goreportcard.com/badge/github.com/shjtmy/mackerel-plugin-litestream)](https://goreportcard.com/report/github.com/shjtmy/mackerel-plugin-litestream)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-## 🚀 特徴
+**mackerel-plugin-litestream** は、SQLite のリアルタイムレプリケーションツール [Litestream](https://litestream.io/) の健全性、レプリケーション状態、およびバックアップ信頼性を可視化・監視するための Mackerel メトリックプラグインです。
 
-1. **セキュアコーディングのお手本**: `main.go` には `slog` を用いた機密情報（パスワードやAPIキー等）の静的・動的マスキング処理が含まれています。
-2. **自動リリースパイプライン (tagpr & GoReleaser)**:
-   - `main` ブランチへのPRマージ時にリリース用PRが自動で作成・更新されます。
-   - リリースPRをマージすると自動的に `vX.Y.Z` タグが打たれ、GitHub Releases にクロスコンパイルされたバイナリが公開されます。
-3. **継続的インテグレーション (CI)**:
-   - `golangci-lint` による静的解析。
-   - `govulncheck` による依存パッケージの脆弱性診断。
-   - 競合検知付きの `go test` による自動検証。
-4. **AIエージェント用カスタムスキル**:
-   - 開発時に Claude Code や Cursor 等のAIエージェントに読み込ませることで、SRE/DBA/セキュリティの専門知識に基づいた設計・実装・レビューを自動で実施させることができます。
+Litestream は SQLite データベースのデータをクラウドストレージ（Amazon S3, Google Cloud Storage, Azure Blob Storage 等）へ継続的に冗長化する極めて重要なサービスです。本プラグインは、レプリケーション停止、WAL肥大化、データ整合性エラー、スナップショット作成遅延、およびリストア時間を悪化させる未コンパクション WAL の滞留を早期に検知します。
 
 ---
 
-## 🛠️ クイックスタート
+## 🚀 主な特徴
 
-### 1. このリポジトリから新規リポジトリを作成
-GitHubの「Use this template」ボタンから、ご自身のリポジトリを作成します。
+1. **メトリクス課金コストの最小化（トグル設計）**:
+   - Mackerel のホストメトリック枠（30〜50メトリック）を無駄に消費しないよう、メトリクスグループごとにフラグで ON/OFF を切り替え可能。
+   - デフォルト（標準モード）では、**1DBあたり約8〜9メトリック**の必要最小限の重要指標に厳選されています。
+2. **systemd / systemctl とのスマートな連携**:
+   - `--systemd-service` オプションにより、サービスの稼働状態を自動判定。
+   - メンテナンス等でサービスが `disabled`（無効化）されている場合は、アラート誤爆を防ぐためメトリクス出力を自動スキップします。
+3. **S3 / クラウドストレージ側のリアルタイムスナップショット・WAL滞留監視**:
+   - CloudWatch の S3 メトリクスが持つ「24時間遅延」の課題を解消。
+   - 最新スナップショットの経過時間（鮮度）、最新スナップショット以降に溜まった未コンパクション WAL 数、リモート総容量・オブジェクト数をリアルタイムに取得。
+4. **S3 API コスト最適化（TTL キャッシュ機構）**:
+   - リモートストレージのリスト処理結果を 5分間（変更可能）ローカルキャッシュし、S3 の ListObjects API コストを大幅に削減。
+5. **既存プラグインとのベストプラクティス連携**:
+   - プロセスの死活監視には `check-systemd`、ログエラーには `check-log` を組み合わせることで、**メトリック枠消費ゼロ**で多層防御を実現（詳細は [監視運用ガイド](docs/monitoring_guide.md) を参照）。
 
-### 2. モジュール名の変更
-作成したリポジトリの `go.mod` 内のモジュール名を変更します。
-```go
-module github.com/your-username/your-repo-name
-```
-また、`main.go` や `.goreleaser.yaml` などに含まれるプロジェクト名も必要に応じて書き換えてください。
+---
 
-### 3. AIカスタムスキルのインストール (任意)
-同梱されているカスタムスキルをお使いのPC（グローバル）にインストールして、すべての Claude Code セッションで有効にします：
+## 📦 インストール
+
+### 方法 1: GitHub Releases からバイナリをダウンロード (推奨)
+[Releases ページ](https://github.com/shjtmy/mackerel-plugin-litestream/releases) からお使いの OS・アーキテクチャに合ったバイナリをダウンロードし、`/usr/local/bin` 等の PATH の通ったディレクトリに配置します。
+
 ```bash
-make install
+# 例: Linux amd64 の場合
+sudo curl -fsSL -o /usr/local/bin/mackerel-plugin-litestream \
+  https://github.com/shjtmy/mackerel-plugin-litestream/releases/latest/download/mackerel-plugin-litestream_Linux_x86_64
+sudo chmod +x /usr/local/bin/mackerel-plugin-litestream
 ```
-*(内部的に `~/.claude/skills/` にコピーします)*
 
----
-
-## ⚙️ 開発コマンド一覧
-
-Makefile に定義されている以下のコマンドを使用して開発を進めます：
-
-| コマンド | 説明 |
-| :--- | :--- |
-| `make fmt` | ソースコードのフォーマットおよびリンターによる自動修正 |
-| `make lint` | `golangci-lint` を使用した静的解析の実行 |
-| `make tidy` | 依存関係 (`go.mod` / `go.sum`) の整理 |
-| `make vulncheck` | `govulncheck` を使用した脆弱性診断の実行 |
-| `make test` | データ競合検知 (`-race`) およびカバレッジ測定付きテストの実行 |
-| `make build` | `bin/app` へのコンパイルの実行 |
-| `make release-snapshot` | `GoReleaser` によるローカルでのスナップショットビルドテスト |
-| `make check` | 同梱スキルのマークダウン文法チェック |
-| `make self-eval` | リポジトリが要件を満たしているかの自己評価の実行 (`REQUIREMENTS.md` の更新) |
-| `make clean` | ビルド成果物やテストキャッシュのクリーンアップ |
-
----
-
-## ☁️ さくらのクラウド Terraform CI/CD
-
-本テンプレートには、さくらのクラウド用の Terraform CI/CD ワークフローが含まれています。`terraform/` ディレクトリ配下のファイルに変更があった場合のみトリガーされます。
-
-### 🔑 GitHub Secrets の設定
-このワークフローを正常に実行するには、事前にGitHubリポジトリの設定（`Settings -> Secrets and variables -> Actions`）から、以下の GitHub Secrets を必ず登録してください。
-
-| Secret 名 | 説明 |
-| :--- | :--- |
-| `SAKURA_ACCESS_TOKEN` | さくらのクラウド API アクセストークン |
-| `SAKURA_ACCESS_TOKEN_SECRET` | さくらのクラウド API アクセストークンシークレット |
-| `AWS_ACCESS_KEY_ID` | S3互換バックエンド (State管理) 用の AWS Access Key ID |
-| `AWS_SECRET_ACCESS_KEY` | S3互換バックエンド (State管理) 用の AWS Secret Access Key |
-
----
-
-## 📋 REQUIREMENTS.md による品質自己評価とカスタマイズ
-
-本テンプレートには、開発時のチェックリストとして `REQUIREMENTS.md` が含まれています。
-`make self-eval` コマンドを実行すると、このファイルのチェックボックス（`[ ]` と `[x]`）が集計され、適合率（パーセンテージ）が動的に自動計算されてファイル下部に書き込まれます。
-
-### 🛠️ カスタマイズ方法（独自の要件の追加）
-
-開発するプロジェクトに合わせて、`REQUIREMENTS.md` に独自の機能要件や非機能要件を自由に追加・変更できます。
-
-1. **`REQUIREMENTS.md` を開く**
-2. **`## 📋 要件チェックリスト` セクションの下に、項目を追加する**
-   - 項目は必ず `- [ ]` (未達成) または `- [x]` (達成) のフォーマットで記述してください。
-   - 例：
-     ```markdown
-     ### 3. プロジェクト固有の機能要件
-     - [ ] **R-3.1 ユーザー認証API**: JWTによる認証機能が実装され、E2Eテストがパスすること。
-     - [ ] **R-3.2 データベース移行**: マイグレーションスクリプトが作成されていること。
-     ```
-3. **セルフチェックの実行**
-   - 項目を追加した後に、以下のコマンドを実行します：
-     ```bash
-     make self-eval
-     ```
-   - これにより、追加したチェックボックスを含めた最新の適合率が自動的に集計され、`## 📈 自己評価結果` セクションが更新されます。
-
----
-
-## 📄 ライセンスと作成者 (AUTHOR) のカスタマイズ
-
-本リポジトリは **Apache License 2.0** でライセンスされています。複製して使用する際は、以下の項目をご自身の情報にカスタマイズしてご利用ください。
-
-### 1. LICENSE ファイルの更新
-リポジトリルートにある [LICENSE](file:///Users/shjtmy/gravity/go_sh0jitmy_template/LICENSE) ファイル内の `[Copyright Holder]` 部分をご自身の名称または組織名に書き換えてください。
-
-### 2. カスタムスキル (author) の一括置換
-同梱されている各カスタムスキル (`.claude/skills/*/SKILL.md`) のフロントマターに定義されている `author: [YOUR_NAME]` を、ご自身の名称に変更してください。
-
-以下のワンコマンドを使用して、すべてのスキルファイルに対して一括置換を実行できます：
-
-**macOS (BSD sed) の場合:**
+### 方法 2: Go コマンドでインストール
 ```bash
-find .claude/skills -name "SKILL.md" -exec sed -i '' 's/\[YOUR_NAME\]/ご自身の名前/g' {} +
-```
-
-**Linux (GNU sed) の場合:**
-```bash
-find .claude/skills -name "SKILL.md" -exec sed -i 's/\[YOUR_NAME\]/ご自身の名前/g' {} +
+go install github.com/shjtmy/mackerel-plugin-litestream@latest
 ```
 
 ---
 
-## 🔒 ログ出力時の機密情報保護指針
-`golang-implementation` スキルに準拠し、本テンプレートでは以下のマスキング機構が実装されています。
+## ⚙️ クイックスタート
 
-- **`SecretString` 型**: ログに出力しようとすると、自動的に `[REDACTED]` に置き換わります。
-- **`HashableSecret` 型**: ソルト付きハッシュ化された値を出力し、ログの検索性を維持しつつ秘匿します。
-- **`NewSecureJSONHandler`**: ログのキー名が `password`, `token`, `secret`, `authorization` の属性を検知した場合、動的に値を `[REDACTED]` へ一括マスキングします。
+### 1. Litestream 側のメトリクス有効化
+Litestream の設定ファイル (`/etc/litestream.yml`) に `addr` を設定し、Prometheus メトリクスエンドポイントを有効化します。
+
+```yaml
+# /etc/litestream.yml
+addr: ":9090"
+
+dbs:
+  - path: /var/lib/myapp.db
+    replicas:
+      - url: s3://my-litestream-bucket/myapp
+```
+
+Litestream を再起動し、メトリクスが取得できることを確認します：
+```bash
+curl http://localhost:9090/metrics
+```
+
+### 2. Mackerel Agent の設定
+`/etc/mackerel-agent/mackerel-agent.conf` にプラグイン設定を追加します。
+
+```ini
+[plugin.metrics.litestream]
+command = [
+    "/usr/local/bin/mackerel-plugin-litestream",
+    "-url", "http://localhost:9090/metrics",
+    "-config", "/etc/litestream.yml",
+    "-systemd-service", "litestream.service"
+]
+```
+
+エージェントをリロードすると、Mackerel コンソールにグラフが自動登録されます：
+```bash
+sudo systemctl reload mackerel-agent
+```
+
+---
+
+## 📊 収集メトリクス一覧
+
+### デフォルトで収集されるメトリクス（標準モード: 1DBあたり約8〜9点）
+
+| グラフキー | メトリック名 | 種別 | 説明 |
+| :--- | :--- | :---: | :--- |
+| `litestream.status` | `alive` | Gauge | プラグインがメトリクスエンドポイントに接続可能か (1=正常, 0=停止) |
+| `litestream.core_errors.#` | `sync_error_count` | Diff | WAL同期エラー発生回数/分 (★重要) |
+| | `verify_error_count` | Diff | コンパクション後の整合性検証失敗数/分 (★データ破損検知) |
+| | `disk_full` | Gauge | ステージング書き込み時のローカルディスクフル停止状態 (1=停止, 0=正常) |
+| `litestream.storage.#` | `db_bytes` | Gauge | SQLiteデータベース本体のファイルサイズ (Bytes) |
+| | `wal_bytes` | Gauge | WALファイルの現在サイズ (Bytes, 肥大化検知) |
+| `litestream.snapshot_age.#` | `latest_age_seconds`| Gauge | 最新スナップショット (Level 9) からの経過時間 (秒) |
+| `litestream.snapshot_wal.#` | `wal_files_since_snapshot` | Gauge | 最新スナップショット以降に溜まっている未コンパクション WAL 数 |
+| | `total_snapshot_count`| Gauge | リモートストレージ上の有効なスナップショット総数 |
+| | `snapshot_missing` | Gauge | **スナップショット不在・消失フラグ** (1=消失/不在, 0=正常) |
+| `litestream.remote_storage.#` | `remote_total_bytes` | Gauge | リモートストレージ上の全ファイル合計サイズ (Bytes) |
+| `litestream.remote_objects.#` | `remote_total_objects`| Gauge | リモートストレージ上の総ファイル数 |
+
+※ `#` にはデータベース名（例: `myapp_db`）が入ります。
+
+### オプトインで有効化できる詳細メトリクス（フラグ指定）
+
+| フラグ | 対象メトリクス | 用途 |
+| :--- | :--- | :--- |
+| `-enable-restore-check` | `restore.#.restore_error`, `restore_duration_seconds` | **冗長化時の復元可能性検証** (1=エラー, 0=正常) およびリストア所要時間 |
+| `-enable-sync-stats` | `sync.#.count`, `sync_latency.#.seconds` | 同期処理の実行回数および所要時間（レイテンシ） |
+| `-enable-checkpoint` | `checkpoint.#.<mode>_count`, `*_error` | SQLiteチェックポイントのモード別実行回数・エラー |
+| `-enable-retention` | `retention.#.eligible`, `not_compacted`, `too_recent` | L0リテンションポリシー対象ファイルの内訳 |
+| `-enable-replica-ops` | `replica_ops.*`, `replica_traffic.*` | S3等の操作回数 (PUT/GET/DELETE) および転送バイト数 |
+| `-enable-replica-errors`| `replica_errors.<type>_<op>_<code>` | S3等のエラーコード別 (`AccessDenied`, `SlowDown` 等) エラー数 |
+
+---
+
+## 🛠️ コマンドラインオプション
+
+```text
+Usage: mackerel-plugin-litestream [options]
+
+接続・基本設定:
+  -url string
+        Litestream Prometheus metrics endpoint URL (default "http://localhost:9090/metrics")
+  -metric-key-prefix string
+        Metric key prefix (default "litestream")
+  -tempfile string
+        Path to temp file for diff calculations
+  -timeout duration
+        HTTP and command execution timeout (default 5s)
+  -db string
+        Filter for a specific database path or name (optional)
+  -config string
+        Path to Litestream config file (default "/etc/litestream.yml")
+  -litestream-bin string
+        Path to litestream binary (default "litestream")
+  -systemd-service string
+        Systemd service name to check status (e.g. litestream.service)
+  -snapshot-cache-ttl duration
+        Cache TTL for remote snapshot/LTX listing (default 5m0s)
+
+リストア検証設定:
+  -enable-restore-check
+        Enable restore verification metrics (default false)
+  -restore-check-interval duration
+        Cache interval / TTL for restore verification (default 30m0s)
+  -restore-dry-run
+        Use dry-run for restore verification to avoid writing files (default true)
+  -check-restore
+        Run in Mackerel check plugin mode for restore verification (exit code 0=OK, 2=CRITICAL)
+
+メトリクス課金抑制（トグル）:
+  -enable-core
+        Enable core error metrics (sync errors, verify errors, disk full) (default true)
+  -enable-storage
+        Enable database and WAL file size metrics (default true)
+  -enable-snapshot
+        Enable snapshot age, uncompacted WAL count, and S3 stats (default true)
+  -enable-sync-stats
+        Enable sync operations count and duration metrics (default false)
+  -enable-checkpoint
+        Enable checkpoint count and error metrics (default false)
+  -enable-retention
+        Enable L0 retention file status metrics (default false)
+  -enable-replica-ops
+        Enable replica storage operations and traffic metrics (default false)
+  -enable-replica-errors
+        Enable replica error code metrics (default false)
+
+その他:
+  -print-graph-defs
+        Print graph definitions (Mackerel plugin specification)
+  -version
+        Show version and exit
+```
+
+---
+
+## 📖 関連ドキュメント
+- [Litestream 監視設計・運用ガイド (docs/monitoring_guide.md)](docs/monitoring_guide.md):
+  - 既存プラグイン（`check-systemd`, `check-log`, `mackerel-plugin-df`）との詳細な役割分担
+  - 運用推奨アラートルール集（Critical / Warning の具体的な閾値とインシデント対応手順）
+- [動作検証・テスト実施報告書 (docs/test_report.md)](docs/test_report.md):
+  - Docker 実環境（MinIO + Litestream + SQLite）での統合テスト結果
+  - 標準モード vs フル観測モードの生出力ログ比較
+  - 障害検知および差分計算の検証結果
+
+---
+
+## 📜 ライセンス
+Apache License 2.0

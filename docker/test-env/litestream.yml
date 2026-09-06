@@ -1,0 +1,10 @@
+addr: ":9090"
+
+dbs:
+  - path: /data/test.db
+    replicas:
+      - url: s3://test-bucket/test.db
+        endpoint: http://minio:9000
+        access-key-id: minioadmin
+        secret-access-key: minioadmin
+        force-path-style: true
