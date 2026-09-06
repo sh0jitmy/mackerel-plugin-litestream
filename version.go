@@ -20,4 +20,4 @@ package main
 // Version はアプリケーションのセマンティックバージョンです。
 // GitHub Actions の tagpr によって自動的にインクリメントされ、管理されます。
 // GoReleaser によるビルド時に -ldflags "-X main.Version={{.Version}}" で上書きされます。
-var Version = "0.0.2"
+var Version = "0.0.3"
