@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.0.2](https://github.com/sh0jitmy/mackerel-plugin-litestream/commits/v0.0.2) - 2026-09-06
+
+- Fix/tagpr go release by @sh0jitmy in https://github.com/sh0jitmy/mackerel-plugin-litestream/pull/8
+- Bump Songmu/tagpr from 1.20.1 to 1.20.2 by @dependabot[bot] in https://github.com/sh0jitmy/mackerel-plugin-litestream/pull/1
+
 ## [v0.0.2](https://github.com/sh0jitmy/go_template/compare/v0.0.1...v0.0.2) - 2026-06-28
 
 - add terraform and coverage check  by @sh0jitmy in https://github.com/sh0jitmy/go_template/pull/8
